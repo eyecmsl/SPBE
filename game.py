@@ -39,6 +39,14 @@ class SpellingBeeGame:
         self.time_limit = 30  # 30 seconds per word
         self.word_start_time = 0
         self.time_remaining = self.time_limit
+        self.hint_used = False
+        self.hint_text = ""
+        
+        # Statistics tracking
+        self.words_attempted = 0
+        self.words_correct = 0
+        self.total_response_time = 0
+        self.session_start_time = pygame.time.get_ticks()
         
         # Initialize components
         self.word_manager = WordManager()
@@ -57,9 +65,20 @@ class SpellingBeeGame:
         self.word_revealed = False
         self.word_start_time = pygame.time.get_ticks()
         self.time_remaining = self.time_limit
+        self.hint_used = False
+        self.hint_text = ""
         
         # Play pronunciation
         self.audio_controller.play_word_pronunciation(self.current_word)
+        
+    def show_hint(self):
+        """Show a hint for the current word"""
+        if not self.hint_used and not self.word_revealed:
+            # Show first letter and word length
+            self.hint_text = f"Hint: {self.current_word[0].upper()}{'_' * (len(self.current_word) - 1)} ({len(self.current_word)} letters)"
+            self.hint_used = True
+            # Reduce score slightly for using hint
+            self.score = max(0, self.score - 5)
         
     def handle_events(self):
         """Handle pygame events"""
@@ -80,6 +99,9 @@ class SpellingBeeGame:
                     elif event.key == pygame.K_SPACE:
                         # Replay word pronunciation
                         self.audio_controller.play_word_pronunciation(self.current_word)
+                    elif event.key == pygame.K_h:
+                        # Show hint
+                        self.show_hint()
                     elif event.unicode.isprintable() and len(self.user_input) < 20:
                         self.user_input += event.unicode.lower()
                         
@@ -89,10 +111,23 @@ class SpellingBeeGame:
                         
     def check_answer(self):
         """Check if user input matches current word"""
+        response_time = (pygame.time.get_ticks() - self.word_start_time) / 1000.0
+        self.words_attempted += 1
+        
         if self.user_input.lower().strip() == self.current_word.lower():
             # Correct answer
-            self.score += 10 * self.word_manager.get_difficulty_multiplier(self.score)
-            self.feedback_message = "Correct!"
+            self.words_correct += 1
+            self.total_response_time += response_time
+            points = 10 * self.word_manager.get_difficulty_multiplier(self.score)
+            
+            # Bonus for fast answers
+            if response_time < 5:
+                points += 5
+                self.feedback_message = "Excellent! Quick and correct!"
+            else:
+                self.feedback_message = "Correct!"
+                
+            self.score += points
             self.feedback_color = (0, 255, 0)
             self.audio_controller.play_correct_sound()
             self.word_revealed = True
@@ -174,7 +209,9 @@ class SpellingBeeGame:
             # Draw game UI
             self.ui_manager.draw_game_ui(self.score, self.lives, self.user_input, 
                                        self.current_word if self.word_revealed else "",
-                                       self.feedback_message, self.feedback_color)
+                                       self.feedback_message, self.feedback_color,
+                                       self.time_remaining, self.word_manager.difficulty_level,
+                                       self.hint_text)
             
             # Draw keyboard
             self.keyboard_display.draw(self.user_input)

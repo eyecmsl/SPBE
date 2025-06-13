@@ -73,7 +73,7 @@ class UIManager:
                 self.draw_text_centered(instruction, self.small_font, self.WHITE, y_pos)
             y_pos += 30
             
-    def draw_game_ui(self, score, lives, user_input, current_word, feedback_message, feedback_color):
+    def draw_game_ui(self, score, lives, user_input, current_word, feedback_message, feedback_color, time_remaining=None, difficulty_level=1, hint_text=""):
         """Draw game playing UI"""
         # Score and lives display
         score_text = f"Score: {score}"
@@ -88,9 +88,24 @@ class UIManager:
             color = self.RED if i < lives else self.GRAY
             pygame.draw.circle(self.screen, color, (heart_x + i * 25, 35), 8)
             
+        # Draw difficulty level
+        difficulty_names = {1: "Easy", 2: "Basic", 3: "Intermediate", 4: "Advanced", 5: "Expert"}
+        difficulty_text = f"Level: {difficulty_names.get(difficulty_level, 'Unknown')}"
+        self.draw_text(difficulty_text, self.small_font, self.YELLOW, 20, 60)
+        
+        # Draw timer if provided
+        if time_remaining is not None:
+            time_color = self.RED if time_remaining <= 5 else self.WHITE
+            time_text = f"Time: {int(time_remaining)}s"
+            self.draw_text(time_text, self.medium_font, time_color, self.screen_width - 150, 60)
+            
         # Instructions
-        instruction_text = "Listen and type the word you hear (SPACE to replay)"
+        instruction_text = "Listen and type the word you hear (SPACE to replay, H for hint)"
         self.draw_text_centered(instruction_text, self.small_font, self.LIGHT_BLUE, 100)
+        
+        # Show hint if available
+        if hint_text:
+            self.draw_text_centered(hint_text, self.small_font, self.YELLOW, 120)
         
         # User input display
         input_bg_rect = pygame.Rect(self.screen_width // 2 - 200, 200, 400, 60)
