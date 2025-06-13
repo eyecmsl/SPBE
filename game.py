@@ -36,6 +36,9 @@ class SpellingBeeGame:
         self.feedback_timer = 0
         self.feedback_message = ""
         self.feedback_color = (255, 255, 255)
+        self.time_limit = 30  # 30 seconds per word
+        self.word_start_time = 0
+        self.time_remaining = self.time_limit
         
         # Initialize components
         self.word_manager = WordManager()
@@ -52,6 +55,8 @@ class SpellingBeeGame:
         self.current_word = self.word_manager.get_next_word(self.score)
         self.user_input = ""
         self.word_revealed = False
+        self.word_start_time = pygame.time.get_ticks()
+        self.time_remaining = self.time_limit
         
         # Play pronunciation
         self.audio_controller.play_word_pronunciation(self.current_word)
@@ -131,6 +136,27 @@ class SpellingBeeGame:
                 
         # Update background animation
         self.background.update()
+        
+        # Update timer for current word
+        if self.game_state == "playing" and not self.word_revealed:
+            elapsed_time = (pygame.time.get_ticks() - self.word_start_time) / 1000.0
+            self.time_remaining = max(0, self.time_limit - elapsed_time)
+            
+            # Check if time is up
+            if self.time_remaining <= 0:
+                self.lives -= 1
+                self.feedback_message = f"Time's up! The word was: {self.current_word}"
+                self.feedback_color = (255, 165, 0)  # Orange
+                self.audio_controller.play_incorrect_sound()
+                self.word_revealed = True
+                
+                if self.lives <= 0:
+                    self.game_state = "game_over"
+                    self.audio_controller.play_death_sound()
+                else:
+                    pygame.time.set_timer(pygame.USEREVENT + 1, 2000)
+                    
+                self.feedback_timer = pygame.time.get_ticks()
         
         # Clear old feedback
         if pygame.time.get_ticks() - self.feedback_timer > 3000:
