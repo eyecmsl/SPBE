@@ -158,6 +158,13 @@ class SpellingBeeGame:
         self.lives = 3
         self.game_state = "playing"
         self.word_manager.reset()
+        
+        # Reset statistics
+        self.words_attempted = 0
+        self.words_correct = 0
+        self.total_response_time = 0
+        self.session_start_time = pygame.time.get_ticks()
+        
         self.next_word()
         
     def update(self):
@@ -217,7 +224,13 @@ class SpellingBeeGame:
             self.keyboard_display.draw(self.user_input)
             
         elif self.game_state == "game_over":
-            self.ui_manager.draw_game_over(self.score)
+            # Calculate performance stats
+            accuracy = (self.words_correct / max(1, self.words_attempted)) * 100
+            avg_response_time = self.total_response_time / max(1, self.words_correct) if self.words_correct > 0 else 0
+            session_time = (pygame.time.get_ticks() - self.session_start_time) / 1000.0
+            
+            self.ui_manager.draw_game_over(self.score, self.words_attempted, self.words_correct, 
+                                         accuracy, avg_response_time, session_time)
             
         pygame.display.flip()
         

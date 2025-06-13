@@ -132,8 +132,8 @@ class UIManager:
         controls_text = "ENTER to submit • SPACE to replay • BACKSPACE to delete"
         self.draw_text_centered(controls_text, self.small_font, self.GRAY, self.screen_height - 50)
         
-    def draw_game_over(self, final_score):
-        """Draw game over screen"""
+    def draw_game_over(self, final_score, words_attempted=0, words_correct=0, accuracy=0, avg_response_time=0, session_time=0):
+        """Draw game over screen with performance statistics"""
         # Semi-transparent overlay
         overlay = pygame.Surface((self.screen_width, self.screen_height))
         overlay.set_alpha(128)
@@ -141,25 +141,58 @@ class UIManager:
         self.screen.blit(overlay, (0, 0))
         
         # Game Over text
-        self.draw_text_centered("GAME OVER", self.title_font, self.RED, 200)
+        self.draw_text_centered("GAME OVER", self.title_font, self.RED, 120)
         
         # Final score
         score_text = f"Final Score: {final_score}"
-        self.draw_text_centered(score_text, self.large_font, self.WHITE, 300)
+        self.draw_text_centered(score_text, self.large_font, self.WHITE, 180)
         
-        # Performance message
-        if final_score < 50:
-            message = "Keep practicing! You're getting better!"
-        elif final_score < 150:
-            message = "Good effort! Try harder words next time!"
-        elif final_score < 300:
-            message = "Well done! You're improving your vocabulary!"
-        elif final_score < 500:
-            message = "Excellent work! You're becoming a spelling champion!"
-        else:
+        # Performance statistics
+        y_pos = 230
+        stats = [
+            f"Words Attempted: {words_attempted}",
+            f"Words Correct: {words_correct}",
+            f"Accuracy: {accuracy:.1f}%",
+            f"Average Response Time: {avg_response_time:.1f}s",
+            f"Session Duration: {session_time/60:.1f} minutes"
+        ]
+        
+        for stat in stats:
+            self.draw_text_centered(stat, self.medium_font, self.LIGHT_BLUE, y_pos)
+            y_pos += 35
+        
+        # Performance message based on accuracy and score
+        if accuracy >= 90 and final_score >= 300:
             message = "Outstanding! You're a true Spelling Bee master!"
+        elif accuracy >= 75 and final_score >= 200:
+            message = "Excellent work! You're becoming a spelling champion!"
+        elif accuracy >= 60 and final_score >= 100:
+            message = "Well done! You're improving your vocabulary!"
+        elif accuracy >= 40:
+            message = "Good effort! Keep practicing to improve!"
+        else:
+            message = "Keep practicing! You're learning and getting better!"
             
-        self.draw_text_centered(message, self.medium_font, self.YELLOW, 370)
+        self.draw_text_centered(message, self.medium_font, self.YELLOW, y_pos + 20)
+        
+        # Educational value summary
+        educational_text = "Educational Benefits Achieved:"
+        self.draw_text_centered(educational_text, self.small_font, self.WHITE, y_pos + 70)
+        
+        benefits = []
+        if words_correct > 5:
+            benefits.append("✓ Vocabulary Expansion")
+        if accuracy > 50:
+            benefits.append("✓ Spelling Improvement")
+        if avg_response_time < 10:
+            benefits.append("✓ Quick Word Recognition")
+        if session_time > 60:
+            benefits.append("✓ Sustained Learning Focus")
+            
+        benefit_y = y_pos + 100
+        for benefit in benefits:
+            self.draw_text_centered(benefit, self.small_font, self.GREEN, benefit_y)
+            benefit_y += 25
         
         # Restart instruction
-        self.draw_text_centered("Press SPACE to play again", self.medium_font, self.WHITE, 450)
+        self.draw_text_centered("Press SPACE to play again", self.medium_font, self.WHITE, self.screen_height - 80)
